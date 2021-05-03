@@ -9,4 +9,4 @@ https://aberryhi.github.io/Lab5-1/
 
 ## Part 2:
 
-LINK TO YOUR PART 2 REPOSITORY
+https://github.com/aberryhi/github-actions-for-ci/issues/7
