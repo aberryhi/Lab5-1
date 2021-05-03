@@ -1,15 +1,120 @@
 // script.js
 
 const img = new Image(); // used to load image from <input> and draw to canvas
+const canvas = document.getElementById('user-image');
+const ctx = canvas.getContext('2d');
+const imginput = document.getElementById('image-input');
+const genmeme = document.getElementById('generate-meme');
+const submit = document.querySelector("[type='submit']");
+const texttop = document.getElementById('text-top');
+const textbottom = document.getElementById('text-bottom');
+const reset = document.querySelector("[type='reset']");
+const read = document.querySelector("[type='button']");
+const volumegroup = document.getElementById('volume-group');
+let volume = 1;
+const voiceselect = document.getElementById('voice-selection');
+const synth = window.speechSynthesis;
+let voices = [];
+function populateVoiceList() {
+  voices = synth.getVoices();
+  voiceselect.remove(0);
+  voices.forEach(function(voice) {
+    let option = document.createElement("option");
+    option.textContent = voice.name + " (" + voice.lang + ")";
+    if(voice.default) {
+      option.textContent += " -- DEFAULT";
+    }
+    option.setAttribute('data-lang', voice.lang);
+    option.setAttribute('data-name', voice.name);
+    voiceselect.appendChild(option);
+  });
+}
+
+populateVoiceList();
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = populateVoiceList;
+}
 
 // Fires whenever the img object loads a new image (such as with img.src =)
 img.addEventListener('load', () => {
   // TODO
 
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  let dim = getDimmensions(canvas.width, canvas.height, img.width, img.height)
+  ctx.drawImage(img, dim.startX, dim.startY, dim.width, dim.height);
+
   // Some helpful tips:
   // - Fill the whole Canvas with black first to add borders on non-square images, then draw on top
   // - Clear the form when a new image is selected
   // - If you draw the image to canvas here, it will update as soon as a new image is selected
+});
+
+imginput.addEventListener('change', () => {
+  img.src = URL.createObjectURL(imginput.files[0]);
+  img.alt = imginput.files[0].name;
+});
+
+genmeme.addEventListener('submit', (event) => {
+  event.preventDefault();
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'white';
+  ctx.strokeStyle = 'black';
+  ctx.font = 'bolder 36px sans-serif';
+  ctx.lineWidth = 6;
+  ctx.miterLimit = 2;
+  ctx.strokeText(texttop.value, canvas.width/2, 48);
+  ctx.fillText(texttop.value, canvas.width/2, 48);
+  ctx.strokeText(textbottom.value, canvas.width/2, canvas.height-24);
+  ctx.fillText(textbottom.value, canvas.width/2, canvas.height-24);
+  submit.disabled = true;
+  reset.disabled = false;
+  read.disabled = false;
+  voiceselect.disabled = false;
+});
+
+reset.addEventListener('click', () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  submit.disabled = false;
+  reset.disabled = true;
+  read.disabled = true;
+  voiceselect.disabled = true;
+});
+
+read.addEventListener('click', () => {
+  const top = new SpeechSynthesisUtterance(texttop.value);
+  const bottom = new SpeechSynthesisUtterance(textbottom.value);
+  const selected = voiceselect.selectedOptions[0].getAttribute('data-name');
+  voices.forEach(function(voice) {
+    if(voice.name === selected) {
+      top.voice = voice;
+      bottom.voice = voice;
+    }
+  });
+  top.volume = volume;
+  bottom.volume = volume;
+  synth.speak(top);
+  synth.speak(bottom);
+});
+
+volumegroup.addEventListener('input', () => {
+  let volrange = document.querySelector("[type='range']");
+  volume = volrange.value/100;
+  let volico = document.querySelector("#volume-group > img");
+  if(volrange.value > 66){
+    volico.src = "icons/volume-level-3.svg";
+    volico.alt="Volume Level 3";
+  }else if(volrange.value > 33){
+    volico.src = "icons/volume-level-2.svg";
+    volico.alt="Volume Level 2";
+  }else if(volrange.value > 0){
+    volico.src = "icons/volume-level-1.svg";
+    volico.alt="Volume Level 1";
+  }else{
+    volico.src = "icons/volume-level-0.svg";
+    volico.alt="Volume Level 0";
+  }
 });
 
 /**
